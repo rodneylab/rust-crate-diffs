@@ -14,13 +14,13 @@ use serde::Deserialize;
 use super::SemverVersion;
 
 #[derive(Debug)]
-pub struct CargoTomlFile {
+pub struct File {
     dependencies: BTreeMap<String, CargoDependencyValue>,
     build_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     dev_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
 }
 
-impl CargoTomlFile {
+impl File {
     pub fn new(path: &str) -> anyhow::Result<Self> {
         let current_cargo = Config::builder()
             .add_source(config::File::with_name(path))
