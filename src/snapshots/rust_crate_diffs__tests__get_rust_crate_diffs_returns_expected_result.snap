@@ -1,0 +1,10 @@
+---
+source: src/main.rs
+expression: result
+input_file: src/snapshot_inputs/cargo_toml_repo.toml
+snapshot_kind: text
+---
+🤷 change ahash from 0.8.10 to 0.8
+🔧 drop clap-verbosity-flag from 3.0.1 to 3.0.0
+✨ add serde 1.0.215
+🗑️ remove git2 0.19.0

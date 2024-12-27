@@ -1,0 +1,12 @@
+Check Cargo.toml dependency changes against git repo head
+
+Usage: rust-crate-diffs [OPTIONS] <REPO_PATH>
+
+Arguments:
+  <REPO_PATH>  repo path
+
+Options:
+  -v, --verbose...  Increase logging verbosity
+  -q, --quiet...    Decrease logging verbosity
+  -h, --help        Print help
+  -V, --version     Print version

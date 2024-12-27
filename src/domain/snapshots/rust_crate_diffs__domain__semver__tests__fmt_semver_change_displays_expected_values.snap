@@ -1,0 +1,10 @@
+---
+source: src/domain/semver.rs
+expression: result
+snapshot_kind: text
+---
+Major: ❗
+Minor: 📦
+Patch: 🔧
+None: 😐
+Unknown: 🤷

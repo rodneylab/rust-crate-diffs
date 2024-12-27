@@ -1,0 +1,6 @@
+error: the following required arguments were not provided:
+  <REPO_PATH>
+
+Usage: rust-crate-diffs <REPO_PATH>
+
+For more information, try '--help'.

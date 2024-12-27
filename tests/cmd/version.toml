@@ -1,0 +1,3 @@
+bin.name = "rust-crate-diffs"
+args = "--version"
+status.code = 0
