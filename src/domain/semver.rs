@@ -29,13 +29,13 @@ impl fmt::Display for Change {
 }
 
 #[derive(Debug)]
-pub struct SemverVersion {
+pub struct Version {
     major: u32,
     minor: Option<u32>,
     patch: Option<u32>,
 }
 
-impl fmt::Display for SemverVersion {
+impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.minor {
             Some(minor_value) => match self.patch {
@@ -47,7 +47,7 @@ impl fmt::Display for SemverVersion {
     }
 }
 
-impl PartialOrd for SemverVersion {
+impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self.minor.is_some() && other.minor.is_some() {
             if (self.patch.is_some() && other.patch.is_some())
@@ -83,16 +83,16 @@ impl PartialOrd for SemverVersion {
     }
 }
 
-impl PartialEq for SemverVersion {
+impl PartialEq for Version {
     fn eq(&self, other: &Self) -> bool {
         self.major == other.major && self.minor == other.minor && self.patch == other.patch
     }
 }
 
-impl Eq for SemverVersion {}
+impl Eq for Version {}
 
-impl SemverVersion {
-    pub fn new(version_number: &str) -> Result<SemverVersion, String> {
+impl Version {
+    pub fn new(version_number: &str) -> Result<Version, String> {
         debug_assert!(version_number == version_number.trim_start());
         let Some(first_digit_index) = version_number
             .trim_start()
@@ -123,7 +123,7 @@ impl SemverVersion {
                 if let Some((minor, patch)) = rest.split_once('.') {
                     if let Ok(minor) = minor.parse::<u32>() {
                         if let Ok(patch) = patch.parse::<u32>() {
-                            return Ok(SemverVersion {
+                            return Ok(Version {
                                 major,
                                 minor: Some(minor),
                                 patch: Some(patch),
@@ -133,7 +133,7 @@ impl SemverVersion {
                     return Err(String::from("Invalid semver string"));
                 }
                 if let Ok(minor) = rest.parse::<u32>() {
-                    return Ok(SemverVersion {
+                    return Ok(Version {
                         major,
                         minor: Some(minor),
                         patch: None,
@@ -142,7 +142,7 @@ impl SemverVersion {
             }
             return Err(String::from("Invalid semver string"));
         } else if let Ok(major) = version_number.parse::<u32>() {
-            return Ok(SemverVersion {
+            return Ok(Version {
                 major,
                 minor: None,
                 patch: None,
@@ -184,7 +184,7 @@ impl SemverVersion {
 
 #[cfg(test)]
 mod tests {
-    use crate::domain::SemverVersion;
+    use crate::domain::Version;
 
     use super::Change;
 
@@ -207,28 +207,28 @@ mod tests {
     #[test]
     fn semver_version_applies_partial_order_as_expected() {
         // assert
-        assert!(SemverVersion::new("1.2.3").unwrap() < SemverVersion::new("1.2.4").unwrap());
-        assert!(SemverVersion::new("1.2.3").unwrap() < SemverVersion::new("1.3.2").unwrap());
-        assert!(SemverVersion::new("1.2.3").unwrap() < SemverVersion::new("2.1.2").unwrap());
-        assert!(SemverVersion::new("1.2").unwrap() < SemverVersion::new("1.3").unwrap());
-        assert!(SemverVersion::new("1.2").unwrap() < SemverVersion::new("2.1").unwrap());
-        assert!(SemverVersion::new("10").unwrap() < SemverVersion::new("200").unwrap());
+        assert!(Version::new("1.2.3").unwrap() < Version::new("1.2.4").unwrap());
+        assert!(Version::new("1.2.3").unwrap() < Version::new("1.3.2").unwrap());
+        assert!(Version::new("1.2.3").unwrap() < Version::new("2.1.2").unwrap());
+        assert!(Version::new("1.2").unwrap() < Version::new("1.3").unwrap());
+        assert!(Version::new("1.2").unwrap() < Version::new("2.1").unwrap());
+        assert!(Version::new("10").unwrap() < Version::new("200").unwrap());
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .partial_cmp(&SemverVersion::new("1.2").unwrap()),
+                .partial_cmp(&Version::new("1.2").unwrap()),
             None
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .partial_cmp(&SemverVersion::new("1").unwrap()),
+                .partial_cmp(&Version::new("1").unwrap()),
             None
         );
         assert_eq!(
-            SemverVersion::new("1.2")
+            Version::new("1.2")
                 .unwrap()
-                .partial_cmp(&SemverVersion::new("1").unwrap()),
+                .partial_cmp(&Version::new("1").unwrap()),
             None
         );
     }
@@ -237,46 +237,40 @@ mod tests {
     fn semver_version_applies_partial_equal_as_expected() {
         // assert
         assert_eq!(
-            SemverVersion::new("1.2.3").unwrap(),
-            SemverVersion::new("1.2.3").unwrap()
+            Version::new("1.2.3").unwrap(),
+            Version::new("1.2.3").unwrap()
         );
-        assert!(SemverVersion::new("1.2.3").unwrap() != SemverVersion::new("1.2.4").unwrap());
-        assert_eq!(
-            SemverVersion::new("1.2").unwrap(),
-            SemverVersion::new("1.2").unwrap()
-        );
-        assert!(SemverVersion::new("1.2").unwrap() != SemverVersion::new("1.3").unwrap());
-        assert_eq!(
-            SemverVersion::new("1").unwrap(),
-            SemverVersion::new("1").unwrap()
-        );
-        assert!(SemverVersion::new("10").unwrap() != SemverVersion::new("200").unwrap());
-        assert!(SemverVersion::new("1").unwrap() != SemverVersion::new("1.0").unwrap());
-        assert!(SemverVersion::new("2.1").unwrap() != SemverVersion::new("2.1.0").unwrap());
+        assert!(Version::new("1.2.3").unwrap() != Version::new("1.2.4").unwrap());
+        assert_eq!(Version::new("1.2").unwrap(), Version::new("1.2").unwrap());
+        assert!(Version::new("1.2").unwrap() != Version::new("1.3").unwrap());
+        assert_eq!(Version::new("1").unwrap(), Version::new("1").unwrap());
+        assert!(Version::new("10").unwrap() != Version::new("200").unwrap());
+        assert!(Version::new("1").unwrap() != Version::new("1.0").unwrap());
+        assert!(Version::new("2.1").unwrap() != Version::new("2.1.0").unwrap());
     }
 
     #[test]
     fn semver_version_parses_valid_semver_strings() {
         // assert
         assert_eq!(
-            SemverVersion::new("1.2.3").unwrap(),
-            SemverVersion {
+            Version::new("1.2.3").unwrap(),
+            Version {
                 major: 1,
                 minor: Some(2),
                 patch: Some(3)
             }
         );
         assert_eq!(
-            SemverVersion::new("1.2").unwrap(),
-            SemverVersion {
+            Version::new("1.2").unwrap(),
+            Version {
                 major: 1,
                 minor: Some(2),
                 patch: None
             }
         );
         assert_eq!(
-            SemverVersion::new("1").unwrap(),
-            SemverVersion {
+            Version::new("1").unwrap(),
+            Version {
                 major: 1,
                 minor: None,
                 patch: None
@@ -288,77 +282,77 @@ mod tests {
     fn semver_version_catches_invalid_semver_strings() {
         // assert
         let expected_error = String::from("Invalid semver string");
-        assert_eq!(SemverVersion::new("1..3").unwrap_err(), expected_error);
-        assert_eq!(SemverVersion::new("1.").unwrap_err(), expected_error);
-        assert_eq!(SemverVersion::new("xyz").unwrap_err(), expected_error);
-        assert_eq!(SemverVersion::new(".2").unwrap_err(), expected_error);
+        assert_eq!(Version::new("1..3").unwrap_err(), expected_error);
+        assert_eq!(Version::new("1.").unwrap_err(), expected_error);
+        assert_eq!(Version::new("xyz").unwrap_err(), expected_error);
+        assert_eq!(Version::new(".2").unwrap_err(), expected_error);
 
         let expected_error =
             String::from("~,<,>,<=, >= and multiple value version prefixes not yet supported");
-        assert_eq!(SemverVersion::new(">2.1.3").unwrap_err(), expected_error);
+        assert_eq!(Version::new(">2.1.3").unwrap_err(), expected_error);
     }
 
     #[test]
     fn change_type_returns_expected_values() {
         // assert
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("1.2.3").unwrap()),
+                .change_type(&Version::new("1.2.3").unwrap()),
             Change::None
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("2.2.3").unwrap()),
+                .change_type(&Version::new("2.2.3").unwrap()),
             Change::Major
         );
         assert_eq!(
-            SemverVersion::new("0.2.3")
+            Version::new("0.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("0.3.3").unwrap()),
+                .change_type(&Version::new("0.3.3").unwrap()),
             Change::Major
         );
         assert_eq!(
-            SemverVersion::new("0.0.3")
+            Version::new("0.0.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("0.0.4").unwrap()),
+                .change_type(&Version::new("0.0.4").unwrap()),
             Change::Major
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("1.3.3").unwrap()),
+                .change_type(&Version::new("1.3.3").unwrap()),
             Change::Minor
         );
         assert_eq!(
-            SemverVersion::new("0.1.2")
+            Version::new("0.1.2")
                 .unwrap()
-                .change_type(&SemverVersion::new("0.1.3").unwrap()),
+                .change_type(&Version::new("0.1.3").unwrap()),
             Change::Minor
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("1.2.4").unwrap()),
+                .change_type(&Version::new("1.2.4").unwrap()),
             Change::Patch
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("1").unwrap()),
+                .change_type(&Version::new("1").unwrap()),
             Change::Unknown
         );
         assert_eq!(
-            SemverVersion::new("1.2.3")
+            Version::new("1.2.3")
                 .unwrap()
-                .change_type(&SemverVersion::new("1.2").unwrap()),
+                .change_type(&Version::new("1.2").unwrap()),
             Change::Unknown
         );
         assert_eq!(
-            SemverVersion::new("1.2")
+            Version::new("1.2")
                 .unwrap()
-                .change_type(&SemverVersion::new("1").unwrap()),
+                .change_type(&Version::new("1").unwrap()),
             Change::Unknown
         );
     }
