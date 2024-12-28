@@ -7,7 +7,7 @@ use std::{cmp::Ordering, fmt};
 /// - `>= 1.2.3`, `> 1.2.3`, `< 1.2.3`, `= 1.2.3`
 /// - `>= 1.2, <1.5` (multiple version requirements for single dependency)
 #[derive(Debug, PartialEq)]
-pub enum SemverChange {
+pub enum Change {
     Major,
     Minor,
     Patch,
@@ -15,27 +15,27 @@ pub enum SemverChange {
     Unknown,
 }
 
-impl fmt::Display for SemverChange {
+impl fmt::Display for Change {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let emoji = match self {
-            SemverChange::Major => "❗",
-            SemverChange::Minor => "📦",
-            SemverChange::Patch => "🔧",
-            SemverChange::None => "😐",
-            SemverChange::Unknown => "🤷",
+            Change::Major => "❗",
+            Change::Minor => "📦",
+            Change::Patch => "🔧",
+            Change::None => "😐",
+            Change::Unknown => "🤷",
         };
         write!(f, "{emoji}")
     }
 }
 
 #[derive(Debug)]
-pub struct SemverVersion {
+pub struct Version {
     major: u32,
     minor: Option<u32>,
     patch: Option<u32>,
 }
 
-impl fmt::Display for SemverVersion {
+impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.minor {
             Some(minor_value) => match self.patch {
@@ -47,7 +47,7 @@ impl fmt::Display for SemverVersion {
     }
 }
 
-impl PartialOrd for SemverVersion {
+impl PartialOrd for Version {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self.minor.is_some() && other.minor.is_some() {
             if (self.patch.is_some() && other.patch.is_some())
@@ -83,16 +83,16 @@ impl PartialOrd for SemverVersion {
     }
 }
 
-impl PartialEq for SemverVersion {
+impl PartialEq for Version {
     fn eq(&self, other: &Self) -> bool {
         self.major == other.major && self.minor == other.minor && self.patch == other.patch
     }
 }
 
-impl Eq for SemverVersion {}
+impl Eq for Version {}
 
-impl SemverVersion {
-    pub fn new(version_number: &str) -> Result<SemverVersion, String> {
+impl Version {
+    pub fn new(version_number: &str) -> Result<Version, String> {
         debug_assert!(version_number == version_number.trim_start());
         let Some(first_digit_index) = version_number
             .trim_start()
@@ -123,7 +123,7 @@ impl SemverVersion {
                 if let Some((minor, patch)) = rest.split_once('.') {
                     if let Ok(minor) = minor.parse::<u32>() {
                         if let Ok(patch) = patch.parse::<u32>() {
-                            return Ok(SemverVersion {
+                            return Ok(Version {
                                 major,
                                 minor: Some(minor),
                                 patch: Some(patch),
@@ -133,7 +133,7 @@ impl SemverVersion {
                     return Err(String::from("Invalid semver string"));
                 }
                 if let Ok(minor) = rest.parse::<u32>() {
-                    return Ok(SemverVersion {
+                    return Ok(Version {
                         major,
                         minor: Some(minor),
                         patch: None,
@@ -142,7 +142,7 @@ impl SemverVersion {
             }
             return Err(String::from("Invalid semver string"));
         } else if let Ok(major) = version_number.parse::<u32>() {
-            return Ok(SemverVersion {
+            return Ok(Version {
                 major,
                 minor: None,
                 patch: None,
@@ -151,53 +151,54 @@ impl SemverVersion {
         Err(String::from("Invalid semver string"))
     }
 
-    pub fn change_type(&self, other: &Self) -> SemverChange {
+    pub fn change_type(&self, other: &Self) -> Change {
         debug_assert!(self.minor.is_some() || self.patch.is_none());
         debug_assert!(other.minor.is_some() || other.patch.is_none());
         if self.major != other.major {
-            return SemverChange::Major;
+            return Change::Major;
         }
         if let (Some(self_minor), Some(other_minor)) = (self.minor, other.minor) {
             if self_minor != other_minor {
                 if self.major > 0 {
-                    return SemverChange::Minor;
+                    return Change::Minor;
                 }
-                return SemverChange::Major;
+                return Change::Major;
             }
             if let (Some(self_patch), Some(other_patch)) = (self.patch, other.patch) {
                 if self_patch != other_patch {
                     if self.major > 0 {
-                        return SemverChange::Patch;
+                        return Change::Patch;
                     }
                     if self_minor > 0 {
-                        return SemverChange::Minor;
+                        return Change::Minor;
                     }
-                    return SemverChange::Major;
+                    return Change::Major;
                 }
-                return SemverChange::None;
+                return Change::None;
             }
         }
 
-        SemverChange::Unknown
+        Change::Unknown
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use crate::domain::SemverVersion;
 
-    use super::SemverChange;
+    use super::Change;
 
     #[test]
     fn fmt_semver_change_displays_expected_values() {
         // act
         let result = format!(
             "Major: {}\nMinor: {}\nPatch: {}\nNone: {}\nUnknown: {}",
-            SemverChange::Major,
-            SemverChange::Minor,
-            SemverChange::Patch,
-            SemverChange::None,
-            SemverChange::Unknown
+            Change::Major,
+            Change::Minor,
+            Change::Patch,
+            Change::None,
+            Change::Unknown
         );
 
         // assert
@@ -305,61 +306,61 @@ mod tests {
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("1.2.3").unwrap()),
-            SemverChange::None
+            Change::None
         );
         assert_eq!(
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("2.2.3").unwrap()),
-            SemverChange::Major
+            Change::Major
         );
         assert_eq!(
             SemverVersion::new("0.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("0.3.3").unwrap()),
-            SemverChange::Major
+            Change::Major
         );
         assert_eq!(
             SemverVersion::new("0.0.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("0.0.4").unwrap()),
-            SemverChange::Major
+            Change::Major
         );
         assert_eq!(
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("1.3.3").unwrap()),
-            SemverChange::Minor
+            Change::Minor
         );
         assert_eq!(
             SemverVersion::new("0.1.2")
                 .unwrap()
                 .change_type(&SemverVersion::new("0.1.3").unwrap()),
-            SemverChange::Minor
+            Change::Minor
         );
         assert_eq!(
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("1.2.4").unwrap()),
-            SemverChange::Patch
+            Change::Patch
         );
         assert_eq!(
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("1").unwrap()),
-            SemverChange::Unknown
+            Change::Unknown
         );
         assert_eq!(
             SemverVersion::new("1.2.3")
                 .unwrap()
                 .change_type(&SemverVersion::new("1.2").unwrap()),
-            SemverChange::Unknown
+            Change::Unknown
         );
         assert_eq!(
             SemverVersion::new("1.2")
                 .unwrap()
                 .change_type(&SemverVersion::new("1").unwrap()),
-            SemverChange::Unknown
+            Change::Unknown
         );
     }
 }

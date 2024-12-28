@@ -7,7 +7,7 @@ use assert_fs::{
 
 use crate::domain::cargo_toml::{CargoDependencyValue, DetailedCargoDependency};
 
-use super::CargoTomlFile;
+use super::File;
 
 fn get_temporary_cargo_toml_path(temp_dir: &TempDir) -> PathBuf {
     let cargo_toml_content = r#"[package]
@@ -50,8 +50,7 @@ fn new_successfully_parses_valid_cargo_toml_dependencies() {
     let temporary_cargo_toml_path = get_temporary_cargo_toml_path(&temp_dir);
 
     // act
-    let CargoTomlFile { dependencies, .. } =
-        CargoTomlFile::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap();
+    let File { dependencies, .. } = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap();
 
     // assert
     assert_eq!(dependencies.len(), 9);
@@ -83,7 +82,7 @@ fn new_handles_missing_cargo_toml() {
     let temporary_cargo_toml_path = temp_dir.join("Cargoooo.toml");
 
     // act
-    let outcome = CargoTomlFile::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap_err();
+    let outcome = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap_err();
 
     // assert
     assert_eq!(
@@ -132,7 +131,7 @@ trycmd = "0.15.8"
     let temporary_cargo_toml_path = temp_dir.join("Cargo.toml");
 
     // act
-    let outcome = CargoTomlFile::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap_err();
+    let outcome = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap_err();
 
     // assert
     assert_eq!(
@@ -157,7 +156,7 @@ trycmd = "0.15.8"
 fn print_changes_versus_previous_version_advises_when_there_are_no_changes() {
     let temp_dir = assert_fs::TempDir::new().unwrap();
     let temporary_cargo_toml_path = get_temporary_cargo_toml_path(&temp_dir);
-    let cargo_toml_file = CargoTomlFile::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap();
+    let cargo_toml_file = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap();
 
     // act
     let output = cargo_toml_file
@@ -230,8 +229,8 @@ assert_fs = "1.1.2"
 trycmd = "0.15.8"
 "#;
 
-    let updated_cargo_toml = CargoTomlFile::new_from_str(updated_cargo_toml_content).unwrap();
-    let earlier_cargo_toml = CargoTomlFile::new_from_str(earlier_cargo_toml_content).unwrap();
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
     // act
     let output = updated_cargo_toml
         .print_changes_versus_previous_version(&earlier_cargo_toml)
@@ -310,8 +309,8 @@ assert_fs = "1.1.2"
 trycmd = "0.15.8"
 "#;
 
-    let updated_cargo_toml = CargoTomlFile::new_from_str(updated_cargo_toml_content).unwrap();
-    let earlier_cargo_toml = CargoTomlFile::new_from_str(earlier_cargo_toml_content).unwrap();
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
 
     // act
     let output = updated_cargo_toml
@@ -389,8 +388,8 @@ assert_fs = "1.1.2"
 trycmd = "0.15.8"
 "#;
 
-    let updated_cargo_toml = CargoTomlFile::new_from_str(updated_cargo_toml_content).unwrap();
-    let earlier_cargo_toml = CargoTomlFile::new_from_str(earlier_cargo_toml_content).unwrap();
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
 
     // act
     let output = updated_cargo_toml
@@ -475,8 +474,8 @@ trycmd = "0.15.8"
 wiremock = "0.6.2"
 "#;
 
-    let updated_cargo_toml = CargoTomlFile::new_from_str(updated_cargo_toml_content).unwrap();
-    let earlier_cargo_toml = CargoTomlFile::new_from_str(earlier_cargo_toml_content).unwrap();
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
 
     // act
     let output = updated_cargo_toml
@@ -562,8 +561,8 @@ fs_extra = "1.3.0"
 glob = "0.3.1"
 "#;
 
-    let updated_cargo_toml = CargoTomlFile::new_from_str(updated_cargo_toml_content).unwrap();
-    let earlier_cargo_toml = CargoTomlFile::new_from_str(earlier_cargo_toml_content).unwrap();
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
 
     // act
     let output = updated_cargo_toml
@@ -624,7 +623,7 @@ fn new_from_buffer_creates_expected_config() {
     ];
 
     // act
-    let outcome = CargoTomlFile::new_from_buffer(&buffer).unwrap();
+    let outcome = File::new_from_buffer(&buffer).unwrap();
 
     // assert
     insta::assert_snapshot!(format!("{outcome:?}"));
