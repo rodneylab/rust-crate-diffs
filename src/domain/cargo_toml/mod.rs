@@ -292,14 +292,16 @@ Ok(value) => value,
 #[derive(Debug, Deserialize, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct DetailedCargoDependency {
-    #[allow(dead_code, reason = "Field needed for deserialisation")]
+    // #[allow(dead_code, reason = "Field needed for deserialisation")]
+    #[allow(dead_code)]
     version: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct GitCargoDependency {
-    #[allow(dead_code, reason = "Field needed for deserialisation")]
+    // #[allow(dead_code, reason = "Field needed for deserialisation")]
+    #[allow(dead_code)]
     git: String,
 }
 
@@ -307,13 +309,16 @@ pub struct GitCargoDependency {
 #[cfg_attr(test, derive(serde::Serialize))]
 #[serde(untagged)]
 pub enum CargoDependencyValue {
-    #[allow(dead_code, reason = "Field needed for deserialisation")]
+    // #[allow(dead_code, reason = "Field needed for deserialisation")]
+    #[allow(dead_code)]
     Simple(String),
 
-    #[allow(dead_code, reason = "Field needed for deserialisation")]
+    // #[allow(dead_code, reason = "Field needed for deserialisation")]
+    #[allow(dead_code)]
     Detailed(DetailedCargoDependency),
 
-    #[allow(dead_code, reason = "Field needed for deserialisation")]
+    // #[allow(dead_code, reason = "Field needed for deserialisation")]
+    #[allow(dead_code)]
     Git(GitCargoDependency),
 }
 
