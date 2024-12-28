@@ -81,6 +81,8 @@ jobs:
         uses: dtolnay/rust-toolchain@4f647fc679bcd3b11499ccb42104547c83dabe96 # stable
         with:
           toolchain: ${{ matrix.msrv }}
+      - name: generate lockfile
+        run: cargo generate-lockfile
       - name: cargo +${{ matrix.msrv }} check
         run: cargo check
   coverage:
