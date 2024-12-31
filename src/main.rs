@@ -19,7 +19,7 @@ use crate::{
 fn get_rust_crate_diffs<P: AsRef<Path>>(repo_path: P) -> anyhow::Result<String> {
     let repo = Repo::new(repo_path.as_ref()).with_context(|| {
         format!(
-            "Failed to open repo at `{}`, check the path is correct.",
+            "Failed to open repo at `{}`. Check the path is correct.",
             repo_path.as_ref().display()
         )
     })?;
