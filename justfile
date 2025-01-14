@@ -15,7 +15,7 @@ coverage:
         LLVM_PROFILE_FILE="rust_crate_diffs-%p-%m.profraw" cargo test
     grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing \
         -o ./target/debug/coverage/
-    open ./target/debug/coverage
+    open --reveal ./target/debug/coverage
     sed -i '' "s|href=\"https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css\"|href=\"file://`pwd`/.cache/bulma.min.css\"|g" ./target/debug/coverage/**/*.html
     mkdir -p .cache
     curl --time-cond .cache/bulma.min.css -C - -Lo .cache/bulma.min.css \
