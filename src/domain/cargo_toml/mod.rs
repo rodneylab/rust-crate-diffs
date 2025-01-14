@@ -65,6 +65,32 @@ impl File {
         })
     }
 
+    fn get_version(value: &CargoDependencyValue) -> anyhow::Result<SemverVersion> {
+        match value {
+            CargoDependencyValue::Simple(version) => SemverVersion::new(version).map_err(|error| {
+                anyhow!(
+                    "Unexpected semver {version} found while computing dependency changes: \
+                            {error}",
+                )
+            }),
+            CargoDependencyValue::Detailed(DetailedCargoDependency { version, .. }) => {
+                SemverVersion::new(version).map_err(|_| {
+                    anyhow!(
+                        "Unexpected semver version `{version}` found while computing \
+                            dependency changes"
+                    )
+                })
+            }
+            CargoDependencyValue::Git(GitCargoDependency { git }) => {
+                log::warn!(
+                    "Git dependency `{git}` found, but version change detection for git \
+                        dependencies is not currently supported"
+                );
+                SemverVersion::new("0").map_err(|_| unreachable!("Version 0 should be valid"))
+            }
+        }
+    }
+
     fn get_changes_from_current_dependencies(
         current_dependencies: &BTreeMap<String, CargoDependencyValue>,
         previous_dependencies: &BTreeMap<String, CargoDependencyValue>,
@@ -73,53 +99,11 @@ impl File {
         result: &mut String,
     ) -> anyhow::Result<()> {
         for (name, current_value) in current_dependencies {
-            let current_version = match current_value {
-                CargoDependencyValue::Simple(version) => {
-                    match SemverVersion::new(version) {
-                        Ok(value) => value,
-                        Err(error) => return Err(anyhow!(error).context(
-                            "Unexpected semver version found while computing dependency changes",
-                        )),
-                    }
-                }
-                CargoDependencyValue::Detailed(DetailedCargoDependency { version, .. }) => {
-                    match SemverVersion::new(version) {
-                        Ok(value)=> value,
-                   Err(error) => return Err(anyhow!(error).context(
-                            "Unexpected semver version `{version}` found while computing dependency changes"
-                        )
-                        )
-                    }
-                },
-                CargoDependencyValue::Git(GitCargoDependency { git }) => {
-                    log::warn!("Git dependency `{git}` found, but version change detection for git dependencies is not currently supported");
-                    SemverVersion::new("0").expect("`0` should be a valid semver version")
-                }
-            };
+            let current_version = Self::get_version(current_value)?;
             if let Some(previous_value) = previous_dependencies.get(name) {
                 // Handle dependencies in previous and current (filtering for ones with changed
                 // versions)
-                let previous_version = match previous_value {
-                    CargoDependencyValue::Simple(version) => match SemverVersion::new(version) {
-                        Ok(value) => value,
-                        Err(error) => return Err(anyhow!(error).context(
-                            "Unexpected semver version found while computing dependency changes",
-                        )),
-                    },
-                    CargoDependencyValue::Detailed(DetailedCargoDependency { version, .. }) => {
-                     match   SemverVersion::new(version){
-Ok(value) => value,
-                   Err(error) => return Err(anyhow!(error).context(
-                            "Unexpected semver version `{version}` found while computing dependency changes"
-                        )
-                        )
-                    }
-                    }
-                    CargoDependencyValue::Git(GitCargoDependency { git }) => {
-                        log::warn!("Git dependency `{git}` found, but version change detection for git dependencies is not currently supported");
-                        SemverVersion::new("0").expect("`0` should be a valid semver version")
-                    }
-                };
+                let previous_version = Self::get_version(previous_value)?;
 
                 // Housekeeping to make previous keys into a list of only crates removed in the
                 // current Cargo.toml
@@ -130,11 +114,13 @@ Ok(value) => value,
                     Some(Ordering::Greater) => {
                         if let Some(label_value) = label {
                             result.push_str(&format!(
-                                "{change_type} bump {name} {label_value} from {previous_version} to {current_version}\n",
+                                "{change_type} bump {name} {label_value} from {previous_version} \
+                                    to {current_version}\n",
                             ));
                         } else {
                             result.push_str(&format!(
-                                "{change_type} bump {name} from {previous_version} to {current_version}\n",
+                                "{change_type} bump {name} from {previous_version} to \
+                                    {current_version}\n",
                             ));
                         }
                     }
@@ -142,22 +128,26 @@ Ok(value) => value,
                     Some(Ordering::Less) => {
                         if let Some(label_value) = label {
                             result.push_str(&format!(
-                            "{change_type} drop {name} {label_value} from {previous_version} to {current_version}\n"
+                            "{change_type} drop {name} {label_value} from {previous_version} to \
+                                {current_version}\n"
                         ));
                         } else {
                             result.push_str(&format!(
-                            "{change_type} drop {name} from {previous_version} to {current_version}\n"
-                        ));
+                                "{change_type} drop {name} from {previous_version} to \
+                                {current_version}\n"
+                            ));
                         }
                     }
                     None => {
                         if let Some(label_value) = label {
                             result.push_str(&format!(
-                                "{change_type} change {name} {label_value} from {previous_version} to {current_version}\n"
+                                "{change_type} change {name} {label_value} from {previous_version} \
+                                to {current_version}\n"
                             ));
                         } else {
                             result.push_str(&format!(
-                                "{change_type} change {name} from {previous_version} to {current_version}\n"
+                                "{change_type} change {name} from {previous_version} to \
+                                {current_version}\n"
                             ));
                         }
                     }
@@ -165,7 +155,7 @@ Ok(value) => value,
             } else {
                 // Handle added dependencies
                 if let Some(label_value) = label {
-                    result.push_str(&format!("✨ add {name} {label_value} {current_version}\n",));
+                    result.push_str(&format!("✨ add {name} {label_value} {current_version}\n"));
                 } else {
                     result.push_str(&format!("✨ add {name} {current_version}\n",));
                 }
