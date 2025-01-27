@@ -33,5 +33,5 @@ toml = "0.8.19"
 
 [dev-dependencies]
 assert_fs = "1.1.2"
-insta = { version = "1.42.0", features = ["glob", "json"] }
+insta = { version = "1.42.1", features = ["glob", "json"] }
 trycmd = "0.15.8"
