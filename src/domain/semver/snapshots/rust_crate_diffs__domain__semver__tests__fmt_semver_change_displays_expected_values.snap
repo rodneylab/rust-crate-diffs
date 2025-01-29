@@ -1,7 +1,6 @@
 ---
-source: src/domain/semver.rs
+source: src/domain/semver/tests.rs
 expression: result
-snapshot_kind: text
 ---
 Major: ❗
 Minor: 📦
