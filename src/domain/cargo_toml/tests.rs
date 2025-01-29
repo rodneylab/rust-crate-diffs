@@ -399,7 +399,7 @@ trycmd = "0.15.8"
     // assert
     assert_eq!(
         output,
-        String::from("📦 bump ahash from 0.8.10 to 0.8.11\n🤷 change serde from 1.0.215 to 1\n")
+        String::from("📦 bump ahash from 0.8.10 to 0.8.11\n🤷 drop serde from 1.0.215 to 1\n")
     );
 }
 
@@ -488,7 +488,6 @@ wiremock = "0.6.2"
         String::from(
             "📦 bump ahash from 0.8.10 to 0.8.11\n✨ add serde 1\n🗑\u{fe0f} remove image 0.25.5\n\
                     ❗ bump assert_fs (🖥\u{fe0f} dev-dependencies) from 0 to 1.1.2\n\
-                    🤷 change float-cmp (🖥\u{fe0f} dev-dependencies) from 0.10.0 to 0.10\n\
                     ✨ add proptest (🖥\u{fe0f} dev-dependencies) 1.6.0\n\
                     ❗ drop trycmd (🖥\u{fe0f} dev-dependencies) from 0.15.8 to 0.14\n\
                     🗑\u{fe0f} remove wiremock (🖥\u{fe0f} dev-dependencies) 0.6.2\n\
