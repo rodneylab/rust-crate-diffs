@@ -226,6 +226,55 @@ impl Version {
         }
     }
 
+    fn exact_range(major: u64, minor: Option<u64>, patch: Option<u64>) -> Range<semver::Version> {
+        if let Some(minor_version) = minor {
+            if let Some(patch_version) = patch {
+                // =I.J.K
+                Range {
+                    start: semver::Version::new(major, minor_version, patch_version),
+                    end: Self::version_with_bumped_patch(major, minor_version, patch_version),
+                }
+            } else {
+                // =I.J
+                Range {
+                    start: semver::Version::new(major, minor_version, 0),
+                    end: Self::version_with_bumped_minor(major, minor_version),
+                }
+            }
+        } else {
+            // =I
+            Range {
+                start: semver::Version::new(major, 0, 0),
+                end: Self::version_with_bumped_major(major),
+            }
+        }
+    }
+
+    fn greater_range(major: u64, minor: Option<u64>, patch: Option<u64>) -> Range<semver::Version> {
+        let end = semver::Version::new(u64::MAX, u64::MAX, u64::MAX);
+        if let Some(minor_version) = minor {
+            if let Some(patch_version) = patch {
+                // >I.J.K
+                Range {
+                    start: Self::version_with_bumped_patch(major, minor_version, patch_version),
+                    end,
+                }
+            } else {
+                // >I.J
+                Range {
+                    start: Self::version_with_bumped_minor(major, minor_version),
+                    end,
+                }
+            }
+        } else {
+            // >I
+            Range {
+                start: Self::version_with_bumped_major(major),
+                end,
+            }
+        }
+    }
+
     fn range(&self) -> Range<semver::Version> {
         let first_comparator = self.req.comparators.first().unwrap();
 
@@ -238,34 +287,9 @@ impl Version {
         } = first_comparator;
         match op {
             Op::Caret => Self::caret_range(*major, *minor, *patch),
-            Op::Exact => {
-                if let Some(minor_version) = minor {
-                    if let Some(patch_version) = patch {
-                        // =I.J.K
-                        Range {
-                            start: semver::Version::new(*major, *minor_version, *patch_version),
-                            end: Self::version_with_bumped_patch(
-                                *major,
-                                *minor_version,
-                                *patch_version,
-                            ),
-                        }
-                    } else {
-                        // =I.J
-                        Range {
-                            start: semver::Version::new(*major, *minor_version, 0),
-                            end: Self::version_with_bumped_minor(*major, *minor_version),
-                        }
-                    }
-                } else {
-                    // =I
-                    Range {
-                        start: semver::Version::new(*major, 0, 0),
-                        end: Self::version_with_bumped_major(*major),
-                    }
-                }
-            }
-            _ => todo!("Ranges only implemented for tilde and exact requirements so far."),
+            Op::Exact => Self::exact_range(*major, *minor, *patch),
+            Op::Greater => Self::greater_range(*major, *minor, *patch),
+            _ => todo!("Ranges only implemented for tilde, exact and greater requirements so far."),
         }
     }
 
@@ -323,8 +347,8 @@ impl Version {
         }
         let Comparator { op, .. } = req.comparators.first().expect("Index should be valid");
         match op {
-            Op::Caret | Op::Exact => Ok(()),
-            Op::GreaterEq | Op::Greater | Op::Less | Op::LessEq => Err(String::from(
+            Op::Caret | Op::Exact | Op::Greater => Ok(()),
+            Op::GreaterEq | Op::Less | Op::LessEq => Err(String::from(
                 "Range version requirement comparison is not yet implemented",
             )),
             Op::Tilde => Err(String::from(
