@@ -20,7 +20,7 @@ opt-level = 3
 [dependencies]
 ahash = "0.8.11"
 anyhow = "1.0.95"
-clap = { version = "4.5.28", features = ["derive"] }
+clap = { version = "4.5.29", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 config = "0.15.8"
 env_logger = "0.11.6"
@@ -33,4 +33,4 @@ toml = "0.8.20"
 [dev-dependencies]
 assert_fs = "1.1.2"
 insta = { version = "1.42.1", features = ["glob", "json"] }
-trycmd = "0.15.8"
+trycmd = "0.15.9"
