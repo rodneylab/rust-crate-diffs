@@ -304,6 +304,31 @@ impl Version {
         }
     }
 
+    fn less_range(major: u64, minor: Option<u64>, patch: Option<u64>) -> Range<semver::Version> {
+        let start = semver::Version::new(0, 0, 0);
+        if let Some(minor_version) = minor {
+            if let Some(patch_version) = patch {
+                // <I.J.K
+                Range {
+                    start,
+                    end: Self::version_with_bumped_patch(major, minor_version, patch_version),
+                }
+            } else {
+                // <I.J
+                Range {
+                    start,
+                    end: semver::Version::new(major, minor_version, 0),
+                }
+            }
+        } else {
+            // <I
+            Range {
+                start,
+                end: semver::Version::new(major, 0, 0),
+            }
+        }
+    }
+
     fn range(&self) -> Range<semver::Version> {
         let first_comparator = self.req.comparators.first().unwrap();
 
@@ -319,7 +344,11 @@ impl Version {
             Op::Exact => Self::exact_range(*major, *minor, *patch),
             Op::Greater => Self::greater_range(*major, *minor, *patch),
             Op::GreaterEq => Self::greater_or_equal_range(*major, *minor, *patch),
-            _ => todo!("Ranges only implemented for tilde, exact and greater requirements so far."),
+            Op::Less => Self::less_range(*major, *minor, *patch),
+            _ => todo!(
+                "Ranges only implemented for tilde, exact, greater than, greater than or \
+                equal and less than requirements so far."
+            ),
         }
     }
 
@@ -377,8 +406,8 @@ impl Version {
         }
         let Comparator { op, .. } = req.comparators.first().expect("Index should be valid");
         match op {
-            Op::Caret | Op::Exact | Op::Greater | Op::GreaterEq => Ok(()),
-            Op::Less | Op::LessEq => Err(String::from(
+            Op::Caret | Op::Exact | Op::Greater | Op::GreaterEq | Op::Less => Ok(()),
+            Op::LessEq => Err(String::from(
                 "Range version requirement comparison is not yet implemented",
             )),
             Op::Tilde => Err(String::from(
