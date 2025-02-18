@@ -401,6 +401,76 @@ fn semver_version_applies_partial_order_as_expected_for_less_requirements() {
 }
 
 #[test]
+fn semver_version_applies_partial_order_as_expected_for_less_or_equal_requirements() {
+    // assert
+    assert!(SemverVersion::new("<=1.2.3").unwrap() < SemverVersion::new("<=1.2.4").unwrap());
+    assert!(SemverVersion::new("<=1.2.3").unwrap() < SemverVersion::new("<=1.3.2").unwrap());
+    assert!(SemverVersion::new("<=1.2.3").unwrap() < SemverVersion::new("<=2.1.2").unwrap());
+    assert!(SemverVersion::new("<=1.2").unwrap() < SemverVersion::new("<=1.3").unwrap());
+    assert!(SemverVersion::new("<=1.2").unwrap() < SemverVersion::new("<=2.1").unwrap());
+    assert!(SemverVersion::new("<=10").unwrap() < SemverVersion::new("<=200").unwrap());
+    assert_eq!(
+        SemverVersion::new("<=1.2.3")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2").unwrap()),
+        Some(Ordering::Less)
+    );
+    assert_eq!(
+        SemverVersion::new("<=1.2.3")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1").unwrap()),
+        Some(Ordering::Less)
+    );
+    assert_eq!(
+        SemverVersion::new("<=1.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1").unwrap()),
+        Some(Ordering::Less)
+    );
+    assert_eq!(
+        SemverVersion::new("<=1.2.4")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2.3").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert!(SemverVersion::new("<=1.3.2").unwrap() > SemverVersion::new("<=1.2.3").unwrap());
+    assert!(SemverVersion::new("<=2.1.2").unwrap() > SemverVersion::new("<=1.2.3").unwrap());
+    assert!(SemverVersion::new("<=1.3").unwrap() > SemverVersion::new("<=1.2").unwrap());
+    assert!(SemverVersion::new("<=2.1").unwrap() > SemverVersion::new("<=1.2").unwrap());
+    assert!(SemverVersion::new("<=200").unwrap() > SemverVersion::new("<=10").unwrap());
+    assert_eq!(
+        SemverVersion::new("<=1.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2.3").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert_eq!(
+        SemverVersion::new("<=1")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2.3").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert_eq!(
+        SemverVersion::new("<=1")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert_eq!(
+        SemverVersion::new("=1.2.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=1.2.2").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert_eq!(
+        SemverVersion::new("=10")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("<=9.0.9").unwrap()),
+        Some(Ordering::Greater)
+    );
+}
+
+#[test]
 fn semver_version_applies_partial_equal_as_expected() {
     // assert
     assert_eq!(
@@ -507,8 +577,8 @@ fn semver_version_catches_invalid_semver_strings() {
         String::from("Tilde version requirement comparison is not yet implemented")
     );
     assert_eq!(
-        SemverVersion::new("<=2.1.3").unwrap_err(),
-        String::from("Range version requirement comparison is not yet implemented")
+        SemverVersion::new("2.1.*").unwrap_err(),
+        String::from("Wildcard version requirement comparison is not yet implemented")
     );
 }
 
