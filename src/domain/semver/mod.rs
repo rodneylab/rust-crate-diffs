@@ -358,6 +358,30 @@ impl Version {
         }
     }
 
+    fn tilde_range(major: u64, minor: Option<u64>, patch: Option<u64>) -> Range<semver::Version> {
+        if let Some(minor_version) = minor {
+            if let Some(patch_version) = patch {
+                // ~I.J.K — equivalent to `>=I.J.K, <I.(J+1).0`
+                Range {
+                    start: semver::Version::new(major, minor_version, patch_version),
+                    end: Self::version_with_bumped_minor(major, minor_version),
+                }
+            } else {
+                // ~I.J — equivalent to `=I.J`
+                Range {
+                    start: semver::Version::new(major, minor_version, 0),
+                    end: Self::version_with_bumped_minor(major, minor_version),
+                }
+            }
+        } else {
+            // ~I.J — equivalent to `=I.J`
+            Range {
+                start: semver::Version::new(major, 0, 0),
+                end: Self::version_with_bumped_major(major),
+            }
+        }
+    }
+
     fn range(&self) -> Range<semver::Version> {
         let first_comparator = self.req.comparators.first().unwrap();
 
@@ -375,6 +399,7 @@ impl Version {
             Op::GreaterEq => Self::greater_or_equal_range(*major, *minor, *patch),
             Op::Less => Self::less_range(*major, *minor, *patch),
             Op::LessEq => Self::less_or_equal_range(*major, *minor, *patch),
+            Op::Tilde => Self::tilde_range(*major, *minor, *patch),
             _ => todo!(
                 "Ranges only implemented for tilde, exact, greater than, greater than or \
                 equal and less than requirements so far."
@@ -436,10 +461,13 @@ impl Version {
         }
         let Comparator { op, .. } = req.comparators.first().expect("Index should be valid");
         match op {
-            Op::Caret | Op::Exact | Op::Greater | Op::GreaterEq | Op::Less | Op::LessEq => Ok(()),
-            Op::Tilde => Err(String::from(
-                "Tilde version requirement comparison is not yet implemented",
-            )),
+            Op::Caret
+            | Op::Exact
+            | Op::Greater
+            | Op::GreaterEq
+            | Op::Less
+            | Op::LessEq
+            | Op::Tilde => Ok(()),
             Op::Wildcard => Err(String::from(
                 "Wildcard version requirement comparison is not yet implemented",
             )),

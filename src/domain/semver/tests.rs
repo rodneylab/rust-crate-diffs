@@ -3,7 +3,7 @@ use std::{cmp::Ordering, ops::Range};
 use semver::{Comparator, Op, Prerelease, VersionReq};
 
 use super::Change;
-use crate::domain::SemverVersion;
+use crate::domain::{semver::Version, SemverVersion};
 
 #[test]
 fn fmt_semver_change_displays_expected_values() {
@@ -19,6 +19,18 @@ fn fmt_semver_change_displays_expected_values() {
 
     // assert
     insta::assert_snapshot!(result);
+}
+
+#[test]
+fn format_version_displays_expected_values() {
+    // arrange
+    let version = Version::new("~7.3.7").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from("~7.3.7"));
 }
 
 #[test]
@@ -471,6 +483,81 @@ fn semver_version_applies_partial_order_as_expected_for_less_or_equal_requiremen
 }
 
 #[test]
+fn semver_version_applies_partial_order_as_expected_for_tilde_requirements() {
+    // assert
+    assert!(SemverVersion::new("~1.2.3").unwrap() < SemverVersion::new("~1.2.4").unwrap());
+    assert!(SemverVersion::new("~1.2.3").unwrap() < SemverVersion::new("~1.3.2").unwrap());
+    assert!(SemverVersion::new("~1.2.3").unwrap() < SemverVersion::new("~2.1.2").unwrap());
+    assert!(SemverVersion::new("~1.2").unwrap() < SemverVersion::new("~1.3").unwrap());
+    assert!(SemverVersion::new("~1.2").unwrap() < SemverVersion::new("~2.1").unwrap());
+    assert!(SemverVersion::new("~10").unwrap() < SemverVersion::new("~200").unwrap());
+    assert_eq!(
+        SemverVersion::new("~1.2.3")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert_eq!(
+        SemverVersion::new("~1.2.3")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new("~1.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new("~1.2.4")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2.3").unwrap()),
+        Some(Ordering::Greater)
+    );
+    assert!(SemverVersion::new("~1.3.2").unwrap() > SemverVersion::new("~1.2.3").unwrap());
+    assert!(SemverVersion::new("~2.1.2").unwrap() > SemverVersion::new("~1.2.3").unwrap());
+    assert!(SemverVersion::new("~1.3").unwrap() > SemverVersion::new("~1.2").unwrap());
+    assert_eq!(
+        SemverVersion::new("~2.1")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~2").unwrap()),
+        None
+    );
+    assert!(SemverVersion::new("~200").unwrap() > SemverVersion::new("~10").unwrap());
+    assert_eq!(
+        SemverVersion::new("~1.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2.3").unwrap()),
+        Some(Ordering::Less)
+    );
+    assert_eq!(
+        SemverVersion::new("~1")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2.3").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new("~1")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new("=1.2.2")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~1.2.2").unwrap()),
+        Some(Ordering::Less)
+    );
+    assert_eq!(
+        SemverVersion::new("=10")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("~9.0.9").unwrap()),
+        Some(Ordering::Greater)
+    );
+}
+
+#[test]
 fn semver_version_applies_partial_equal_as_expected() {
     // assert
     assert_eq!(
@@ -573,12 +660,12 @@ fn semver_version_catches_invalid_semver_strings() {
         String::from("unexpected character '.' while parsing major version number")
     );
     assert_eq!(
-        SemverVersion::new("~7.8.9").unwrap_err(),
-        String::from("Tilde version requirement comparison is not yet implemented")
-    );
-    assert_eq!(
         SemverVersion::new("2.1.*").unwrap_err(),
         String::from("Wildcard version requirement comparison is not yet implemented")
+    );
+    assert_eq!(
+        SemverVersion::new(">=1.2, <1.5").unwrap_err(),
+        String::from("Multiple version requirement comparison is not yet implemented")
     );
 }
 
