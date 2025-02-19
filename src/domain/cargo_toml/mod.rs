@@ -5,6 +5,7 @@ use core::str;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
+    fmt::Write as _,
 };
 
 use anyhow::{anyhow, Context};
@@ -113,51 +114,55 @@ impl File {
                 match current_version.partial_cmp(&previous_version) {
                     Some(Ordering::Greater) => {
                         if let Some(label_value) = label {
-                            result.push_str(&format!(
+                            let _ =
+                                writeln!(result,
                                 "{change_type} bump {name} {label_value} from {previous_version} \
-                                    to {current_version}\n",
-                            ));
+                                    to {current_version}",
+                            );
                         } else {
-                            result.push_str(&format!(
+                            let _ = writeln!(
+                                result,
                                 "{change_type} bump {name} from {previous_version} to \
-                                    {current_version}\n",
-                            ));
+                                    {current_version}",
+                            );
                         }
                     }
                     Some(Ordering::Equal) => {}
                     Some(Ordering::Less) => {
                         if let Some(label_value) = label {
-                            result.push_str(&format!(
+                            let _ = writeln!(result,
                             "{change_type} drop {name} {label_value} from {previous_version} to \
-                                {current_version}\n"
-                        ));
+                                {current_version}"
+                        );
                         } else {
-                            result.push_str(&format!(
+                            let _ = writeln!(
+                                result,
                                 "{change_type} drop {name} from {previous_version} to \
-                                {current_version}\n"
-                            ));
+                                {current_version}"
+                            );
                         }
                     }
                     None => {
                         if let Some(label_value) = label {
-                            result.push_str(&format!(
+                            let _ = writeln!(result,
                                 "{change_type} change {name} {label_value} from {previous_version} \
                                 to {current_version}\n"
-                            ));
+                            );
                         } else {
-                            result.push_str(&format!(
+                            let _ = writeln!(
+                                result,
                                 "{change_type} change {name} from {previous_version} to \
-                                {current_version}\n"
-                            ));
+                                {current_version}"
+                            );
                         }
                     }
                 }
             } else {
                 // Handle added dependencies
                 if let Some(label_value) = label {
-                    result.push_str(&format!("✨ add {name} {label_value} {current_version}\n"));
+                    let _ = writeln!(result, "✨ add {name} {label_value} {current_version}");
                 } else {
-                    result.push_str(&format!("✨ add {name} {current_version}\n",));
+                    let _ = writeln!(result, "✨ add {name} {current_version}");
                 }
             }
         }
@@ -200,9 +205,9 @@ impl File {
                 }
             };
             if let Some(label_value) = label {
-                result.push_str(&format!("🗑️ remove {name} {label_value} {version}\n",));
+                let _ = writeln!(result, "🗑️ remove {name} {label_value} {version}");
             } else {
-                result.push_str(&format!("🗑️ remove {name} {version}\n",));
+                let _ = writeln!(result, "🗑️ remove {name} {version}");
             }
         }
 
