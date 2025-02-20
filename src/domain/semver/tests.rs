@@ -31,6 +31,33 @@ fn format_version_displays_expected_values() {
 
     // assert
     assert_eq!(result, String::from("~7.3.7"));
+
+    // arrange
+    let version = Version::new("8.8.*").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from("8.8.*"));
+
+    // arrange
+    let version = Version::new("4.*").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from("4.*"));
+
+    // arrange
+    let version = Version::new("8.*.*").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from("8.*"));
 }
 
 #[test]
@@ -558,6 +585,40 @@ fn semver_version_applies_partial_order_as_expected_for_tilde_requirements() {
 }
 
 #[test]
+fn semver_version_applies_partial_order_as_expected_for_wildcard_requirements() {
+    // assert
+    assert!(SemverVersion::new("1.2.*").unwrap() < SemverVersion::new("1.3.*").unwrap());
+    assert!(SemverVersion::new("1.2.*").unwrap() < SemverVersion::new("2.1.*").unwrap());
+    assert!(SemverVersion::new("10.*").unwrap() < SemverVersion::new("200.*").unwrap());
+    assert_eq!(
+        SemverVersion::new("1.2.*")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("1.*").unwrap()),
+        None
+    );
+    assert!(SemverVersion::new("1.3.*").unwrap() > SemverVersion::new("1.2.*").unwrap());
+    assert_eq!(
+        SemverVersion::new("2.1.*")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("2.*").unwrap()),
+        None
+    );
+    assert!(SemverVersion::new("200.*").unwrap() > SemverVersion::new("10.*").unwrap());
+    assert_eq!(
+        SemverVersion::new("1.*")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("1.2.*").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new("=10")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("9.0.*").unwrap()),
+        Some(Ordering::Greater)
+    );
+}
+
+#[test]
 fn semver_version_applies_partial_equal_as_expected() {
     // assert
     assert_eq!(
@@ -658,10 +719,6 @@ fn semver_version_catches_invalid_semver_strings() {
     assert_eq!(
         SemverVersion::new(".2").unwrap_err(),
         String::from("unexpected character '.' while parsing major version number")
-    );
-    assert_eq!(
-        SemverVersion::new("2.1.*").unwrap_err(),
-        String::from("Wildcard version requirement comparison is not yet implemented")
     );
     assert_eq!(
         SemverVersion::new(">=1.2, <1.5").unwrap_err(),

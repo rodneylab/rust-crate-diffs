@@ -10,11 +10,11 @@ use semver::{BuildMetadata, Comparator, Op, Prerelease, VersionReq};
 mod tests;
 
 /// Rust Cargo.toml accepted dependency version formats:
-/// - `1.2.3`
-/// - `~1.2.3`
-/// - `*`, `1.*`, `1.2.*`
-/// - `>= 1.2.3`, `> 1.2.3`, `< 1.2.3`, `= 1.2.3`
-/// - `>= 1.2, <1.5` (multiple version requirements for single dependency)
+/// - `1.2.3`;
+/// - `~1.2.3`;
+/// - `*`, `1.*`, `1.2.*`;
+/// - `>= 1.2.3`, `> 1.2.3`, `< 1.2.3`, `= 1.2.3`; and
+/// - `>= 1.2, <1.5` (multiple version requirements for single dependency).
 #[derive(Debug, PartialEq)]
 pub enum Change {
     Major,
@@ -374,7 +374,29 @@ impl Version {
                 }
             }
         } else {
-            // ~I.J — equivalent to `=I.J`
+            // ~I — equivalent to `=I`
+            Range {
+                start: semver::Version::new(major, 0, 0),
+                end: Self::version_with_bumped_major(major),
+            }
+        }
+    }
+
+    fn wildcard_range(
+        major: u64,
+        minor: Option<u64>,
+        patch: Option<u64>,
+    ) -> Range<semver::Version> {
+        debug_assert!(patch.is_none());
+
+        if let Some(minor_version) = minor {
+            // I.J.* — equivalent to `=I.J`
+            Range {
+                start: semver::Version::new(major, minor_version, 0),
+                end: Self::version_with_bumped_minor(major, minor_version),
+            }
+        } else {
+            // `I.*` or `I.*.*` — equivalent to `=I`
             Range {
                 start: semver::Version::new(major, 0, 0),
                 end: Self::version_with_bumped_major(major),
@@ -400,9 +422,10 @@ impl Version {
             Op::Less => Self::less_range(*major, *minor, *patch),
             Op::LessEq => Self::less_or_equal_range(*major, *minor, *patch),
             Op::Tilde => Self::tilde_range(*major, *minor, *patch),
-            _ => todo!(
-                "Ranges only implemented for tilde, exact, greater than, greater than or \
-                equal and less than requirements so far."
+            Op::Wildcard => Self::wildcard_range(*major, *minor, *patch),
+            _ => unimplemented!(
+                "Ranges only implemented for caret, exact, greater than, greater than or equal, \
+                    less than, less than or equal, tilde and wildcard requirements."
             ),
         }
     }
@@ -467,10 +490,8 @@ impl Version {
             | Op::GreaterEq
             | Op::Less
             | Op::LessEq
-            | Op::Tilde => Ok(()),
-            Op::Wildcard => Err(String::from(
-                "Wildcard version requirement comparison is not yet implemented",
-            )),
+            | Op::Tilde
+            | Op::Wildcard => Ok(()),
             _ => Err(String::from(
                 "Unexpected version requirement. Requirement type is not yet implemented",
             )),
