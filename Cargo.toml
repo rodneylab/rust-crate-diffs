@@ -5,8 +5,8 @@ authors = ["Rodney Johnson <ask@rodneylab.com>"]
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/rodneylab/rust-crate-diffs"
-# config 0.15.4 raises MSRV to 1.75
-rust-version = "1.75"
+# git2 v0.20.0 raises MSRV to 1.81
+rust-version = "1.81"
 description = "Check Cargo.toml dependency changes against git repo head"
 
 # Faster snapshot runs
@@ -19,18 +19,18 @@ opt-level = 3
 
 [dependencies]
 ahash = "0.8.11"
-anyhow = "1.0.95"
-clap = { version = "4.5.30", features = ["derive"] }
+anyhow = "1.0.97"
+clap = { version = "4.5.31", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 config = "0.15.8"
 env_logger = "0.11.6"
 git2 = "0.20.0"
-log = "0.4.25"
+log = "0.4.26"
 semver = "1.0.25"
-serde = { version = "1.0.217", features = ["derive"] }
+serde = { version = "1.0.218", features = ["derive"] }
 toml = "0.8.20"
 
 [dev-dependencies]
 assert_fs = "1.1.2"
-insta = { version = "1.42.1", features = ["glob", "json"] }
+insta = { version = "1.42.2", features = ["glob", "json"] }
 trycmd = "0.15.9"
