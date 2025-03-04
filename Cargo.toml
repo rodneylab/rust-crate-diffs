@@ -5,8 +5,8 @@ authors = ["Rodney Johnson <ask@rodneylab.com>"]
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/rodneylab/rust-crate-diffs"
-# config 0.15.4 raises MSRV to 1.75
-rust-version = "1.75"
+# git2 v0.20.0 raises MSRV to 1.81
+rust-version = "1.81"
 description = "Check Cargo.toml dependency changes against git repo head"
 
 # Faster snapshot runs
