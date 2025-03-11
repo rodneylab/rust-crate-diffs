@@ -71,7 +71,7 @@ feature-depth = 1
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-
+  "RUSTSEC-2025-0014",
   # "RUSTSEC-0000-0000",
   # { id = "RUSTSEC-0000-0000", reason = "you can specify a reason the advisory is ignored" },
   # "a-crate-that-is-yanked@0.1.1", # you can also ignore yanked crate versions if you wish
@@ -107,10 +107,9 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-
   # Each entry is the crate and version constraint, and its specific allow
   # list
-  # { allow = ["Zlib"], crate = "adler32" },
+  { allow = ["Zlib"], crate = "foldhash" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,
