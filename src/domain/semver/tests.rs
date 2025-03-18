@@ -58,6 +58,33 @@ fn format_version_displays_expected_values() {
 
     // assert
     assert_eq!(result, String::from("8.*"));
+
+    // arrange
+    let version = Version::new(">=1.2, <1.5").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from(">=1.2, <1.5"));
+
+    // arrange
+    let version = Version::new(">=1.5, <1.2").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from(">=1.5, <1.2"));
+
+    // arrange
+    let version = Version::new(">=1.5,     >=1.9").unwrap();
+
+    // act
+    let result = format!("{version}");
+
+    // assert
+    assert_eq!(result, String::from(">=1.5, >=1.9"));
 }
 
 #[test]
@@ -619,6 +646,25 @@ fn semver_version_applies_partial_order_as_expected_for_wildcard_requirements() 
 }
 
 #[test]
+fn semver_version_applies_partial_order_as_expected_for_multiple_requirements() {
+    // assert
+    assert!(SemverVersion::new(">=1.2.3, <3").unwrap() < SemverVersion::new("~9.9.9").unwrap());
+    assert!(SemverVersion::new(">=1.2.3, <3").unwrap() < SemverVersion::new(">4, <5.6.3").unwrap());
+    assert_eq!(
+        SemverVersion::new(">=1.2.3, <3")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new(">=2.9, <5.9.2").unwrap()),
+        None
+    );
+    assert_eq!(
+        SemverVersion::new(">=1.2.3, <3, >=1.4.6, <1.4.7")
+            .unwrap()
+            .partial_cmp(&SemverVersion::new("=1.4.6").unwrap()),
+        Some(Ordering::Equal)
+    );
+}
+
+#[test]
 fn semver_version_applies_partial_equal_as_expected() {
     // assert
     assert_eq!(
@@ -720,10 +766,6 @@ fn semver_version_catches_invalid_semver_strings() {
         SemverVersion::new(".2").unwrap_err(),
         String::from("unexpected character '.' while parsing major version number")
     );
-    assert_eq!(
-        SemverVersion::new(">=1.2, <1.5").unwrap_err(),
-        String::from("Multiple version requirement comparison is not yet implemented")
-    );
 }
 
 #[test]
@@ -814,172 +856,26 @@ fn fmt_returns_expected_value_for_prerelease_requirement() {
 }
 
 #[test]
-fn version_range_returns_expected_value_for_caret_requirements() {
+fn comparator_ranges_returns_expected_value() {
     // arrange
-    let version = SemverVersion::new("^1.7.9").unwrap();
+    let version = Version::new(">=1.2.3, <3").unwrap();
 
     // act
-    let outcome = version.range();
+    let Range { start, end } = version.comparator_ranges();
 
     // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(1, 7, 9),
-            end: semver::Version::new(2, 0, 0),
-        },
-    );
+
+    assert_eq!(start, semver::Version::new(1, 2, 3));
+    assert_eq!(end, semver::Version::new(3, 0, 0));
 
     // arrange
-    let version = SemverVersion::new("^0.3.7").unwrap();
+    let version = Version::new(">=1.2.3, <3, >=1.4.6, <1.4.7").unwrap();
 
     // act
-    let outcome = version.range();
+    let Range { start, end } = version.comparator_ranges();
 
     // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 3, 7),
-            end: semver::Version::new(0, 4, 0),
-        },
-    );
 
-    // arrange
-    let version = SemverVersion::new("^0.10").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 10, 0),
-            end: semver::Version::new(0, 11, 0),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("^0.0.2").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 0, 2),
-            end: semver::Version::new(0, 0, 3),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("^5.6").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(5, 6, 0),
-            end: semver::Version::new(6, 0, 0),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("^0.0").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 0, 0),
-            end: semver::Version::new(0, 1, 0),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("^0").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 0, 0),
-            end: semver::Version::new(1, 0, 0),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("^4").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(4, 0, 0),
-            end: semver::Version::new(5, 0, 0),
-        },
-    );
-}
-
-#[test]
-fn version_range_returns_expected_value_for_exact_requirements() {
-    // arrange
-    let version = SemverVersion::new("=8.1.8").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(8, 1, 8),
-            end: semver::Version::new(8, 1, 9),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("=0.7").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(0, 7, 0),
-            end: semver::Version::new(0, 8, 0),
-        },
-    );
-
-    // arrange
-    let version = SemverVersion::new("=2").unwrap();
-
-    // act
-    let outcome = version.range();
-
-    // assert
-    assert_eq!(
-        outcome,
-        Range {
-            start: semver::Version::new(2, 0, 0),
-            end: semver::Version::new(3, 0, 0),
-        },
-    );
+    assert_eq!(start, semver::Version::new(1, 4, 6));
+    assert_eq!(end, semver::Version::new(1, 4, 7));
 }
