@@ -425,24 +425,31 @@ impl Version {
                 Op::Tilde => Self::tilde_range(*major, *minor, *patch),
                 Op::Caret => Self::caret_range(*major, *minor, *patch),
                 Op::Wildcard => Self::wildcard_range(*major, *minor, *patch),
-                _ => unimplemented!(),
+                _ => unimplemented!("Unsupported semver operator: `{op:?}`"),
             };
 
             match op {
-                Op::Exact | Op::Tilde | Op::Caret | Op::Wildcard | Op::Greater | Op::GreaterEq => {
+                Op::Exact | Op::Tilde | Op::Caret | Op::Wildcard => {
                     if range.start > start {
                         start = range.start;
                     }
-                }
-                _ => {}
-            }
-            match op {
-                Op::Exact | Op::Tilde | Op::Caret | Op::Wildcard | Op::Less | Op::LessEq => {
                     if range.end < end {
                         end = range.end;
                     }
                 }
-                _ => {}
+                Op::Greater | Op::GreaterEq => {
+                    if range.start > start {
+                        start = range.start;
+                    }
+                }
+                Op::Less | Op::LessEq => {
+                    if range.end < end {
+                        end = range.end;
+                    }
+                }
+                _ => unreachable!(
+                    "Previous match statement should cause a panic on non-implemented operations."
+                ),
             }
         }
 
