@@ -1,12 +1,12 @@
 ---
 source: src/domain/cargo_toml/tests.rs
 expression: dependencies
-snapshot_kind: text
 ---
 {
   "ahash": "0.8.11",
   "clap": {
-    "version": "4.5.23"
+    "version": "4.5.23",
+    "package": null
   },
   "clap-verbosity-flag": "3.0.1",
   "config": "0.14.1",
@@ -14,9 +14,11 @@ snapshot_kind: text
   "git2": "0.19.0",
   "log": "0.4.22",
   "serde": {
-    "version": "1.0.215"
+    "version": "1.0.215",
+    "package": null
   },
   "sqlx": {
-    "version": "0.8.2"
+    "version": "0.8.2",
+    "package": null
   }
 }

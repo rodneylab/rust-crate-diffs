@@ -61,14 +61,16 @@ fn new_successfully_parses_valid_cargo_toml_dependencies() {
     assert_eq!(
         dependencies.get("serde"),
         Some(CargoDependencyValue::Detailed(DetailedCargoDependency {
-            version: String::from("1.0.215")
+            version: String::from("1.0.215"),
+            package: None
         }))
         .as_ref()
     );
     assert_eq!(
         dependencies.get("sqlx"),
         Some(CargoDependencyValue::Detailed(DetailedCargoDependency {
-            version: String::from("0.8.2")
+            version: String::from("0.8.2"),
+            package: None
         }))
         .as_ref()
     );
@@ -626,4 +628,143 @@ fn new_from_buffer_creates_expected_config() {
 
     // assert
     insta::assert_snapshot!(format!("{outcome:?}"));
+}
+
+#[test]
+fn get_changes_from_current_dependencies_emits_package_field_for_name_when_present() {
+    // arrange
+    let updated_cargo_toml_content = r#"[package]
+name = "some-example-crate"
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2024"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.75"
+description = "An example Rust app"
+
+[dependencies]
+getrandom = { version = "0.3.2", features = ["wasm_js"] }
+getrandom2 = { package = "getrandom", version = "0.2.15", features = ["js"] }
+"#;
+
+    let earlier_cargo_toml_content = r#"[package]
+name = "some-example-crate"
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2024"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.75"
+description = "An example Rust app"
+
+[dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom2 = { package = "getrandom", version = "0.2.1", features = ["js"] }
+"#;
+    // assert
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
+
+    // act
+    let output = updated_cargo_toml
+        .print_changes_versus_previous_version(&earlier_cargo_toml)
+        .unwrap();
+
+    // assert
+    assert_eq!(
+        output,
+        String::from(
+            "🤷 bump getrandom from 0.3 to 0.3.2\n📦 bump getrandom from 0.2.1 to 0.2.15\n"
+        )
+    );
+}
+
+#[test]
+fn get_changes_from_current_dependencies_emits_package_field_for_name_when_present_and_tracks_changed_alias(
+) {
+    // arrange
+    let updated_cargo_toml_content = r#"[package]
+name = "some-example-crate"
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2024"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.75"
+description = "An example Rust app"
+
+[dependencies]
+getrandom = { version = "0.3.2", features = ["wasm_js"] }
+getrandom2 = { package = "getrandom", version = "0.2.15", features = ["js"] }
+"#;
+
+    let earlier_cargo_toml_content = r#"[package]
+name = "some-example-crate"
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2024"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.75"
+description = "An example Rust app"
+
+[dependencies]
+getrandom_current = { version = "0.3", features = ["wasm_js"] }
+getrandom_previous = { package = "getrandom", version = "0.2.1", features = ["js"] }
+"#;
+    // assert
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
+
+    // act
+    let output = updated_cargo_toml
+        .print_changes_versus_previous_version(&earlier_cargo_toml)
+        .unwrap();
+
+    // assert
+    assert_eq!(
+        output,
+        String::from(
+   "✨ add getrandom 0.3.2\n✨ add getrandom 0.2.15\n🗑\u{fe0f} remove getrandom_current 0.3\n🗑\u{fe0f} remove getrandom 0.2.1\n"
+        )
+    );
+}
+
+#[test]
+fn get_changes_from_current_dependencies_reports_addition_and_removal_of_git_dependencies() {
+    // arrange
+    let updated_cargo_toml_content = r#"[package]
+name = "gpui-tryout"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gpui = { git = "https://github.com/zed-industries/zed", rev = "f1af2a4a58b4e48a0ce442181120859cd4df4b30" } # v0.174.4
+http_client = { git = "https://github.com/zed-industries/zed", rev = "f1af2a4a58b4e48a0ce442181120859cd4df4b30" } # v0.174.4
+"#;
+
+    let earlier_cargo_toml_content = r#"[package]
+name = "gpui-tryout"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gpui = { git = "https://github.com/zed-industries/zed", rev = "a3f070195111f8d80111cd73b8a26d7aa2228040" } # v0.171.6
+reqwest_client = { git = "https://github.com/zed-industries/zed", rev = "a3f070195111f8d80111cd73b8a26d7aa2228040" } # v0.171.6
+"#;
+    // assert
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
+
+    // act
+    let output = updated_cargo_toml
+        .print_changes_versus_previous_version(&earlier_cargo_toml)
+        .unwrap();
+
+    // assert
+    assert_eq!(
+        output,
+        String::from("✨ add http_client 0\n🗑\u{fe0f} remove reqwest_client 0\n")
+    );
 }
