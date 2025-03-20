@@ -82,7 +82,7 @@ impl File {
                     )
                 })
             }
-            CargoDependencyValue::Git(GitCargoDependency { git }) => {
+            CargoDependencyValue::Git(GitCargoDependency { git, .. }) => {
                 log::warn!(
                     "Git dependency `{git}` found, but version change detection for git \
                         dependencies is not currently supported"
@@ -101,6 +101,17 @@ impl File {
     ) -> anyhow::Result<()> {
         for (name, current_value) in current_dependencies {
             let current_version = Self::get_version(current_value)?;
+            let package_name = match current_value {
+                CargoDependencyValue::Simple(_) => name,
+                CargoDependencyValue::Git(GitCargoDependency { package, .. })
+                | CargoDependencyValue::Detailed(DetailedCargoDependency { package, .. }) => {
+                    if let Some(package_value) = package {
+                        package_value
+                    } else {
+                        name
+                    }
+                }
+            };
             if let Some(previous_value) = previous_dependencies.get(name) {
                 // Handle dependencies in previous and current (filtering for ones with changed
                 // versions)
@@ -116,13 +127,13 @@ impl File {
                         if let Some(label_value) = label {
                             let _ =
                                 writeln!(result,
-                                "{change_type} bump {name} {label_value} from {previous_version} \
+                                "{change_type} bump {package_name} {label_value} from {previous_version} \
                                     to {current_version}",
                             );
                         } else {
                             let _ = writeln!(
                                 result,
-                                "{change_type} bump {name} from {previous_version} to \
+                                "{change_type} bump {package_name} from {previous_version} to \
                                     {current_version}",
                             );
                         }
@@ -131,13 +142,13 @@ impl File {
                     Some(Ordering::Less) => {
                         if let Some(label_value) = label {
                             let _ = writeln!(result,
-                            "{change_type} drop {name} {label_value} from {previous_version} to \
+                            "{change_type} drop {package_name} {label_value} from {previous_version} to \
                                 {current_version}"
                         );
                         } else {
                             let _ = writeln!(
                                 result,
-                                "{change_type} drop {name} from {previous_version} to \
+                                "{change_type} drop {package_name} from {previous_version} to \
                                 {current_version}"
                             );
                         }
@@ -145,13 +156,13 @@ impl File {
                     None => {
                         if let Some(label_value) = label {
                             let _ = writeln!(result,
-                                "{change_type} change {name} {label_value} from {previous_version} \
+                                "{change_type} change {package_name} {label_value} from {previous_version} \
                                 to {current_version}\n"
                             );
                         } else {
                             let _ = writeln!(
                                 result,
-                                "{change_type} change {name} from {previous_version} to \
+                                "{change_type} change {package_name} from {previous_version} to \
                                 {current_version}"
                             );
                         }
@@ -160,9 +171,12 @@ impl File {
             } else {
                 // Handle added dependencies
                 if let Some(label_value) = label {
-                    let _ = writeln!(result, "✨ add {name} {label_value} {current_version}");
+                    let _ = writeln!(
+                        result,
+                        "✨ add {package_name} {label_value} {current_version}"
+                    );
                 } else {
-                    let _ = writeln!(result, "✨ add {name} {current_version}");
+                    let _ = writeln!(result, "✨ add {package_name} {current_version}");
                 }
             }
         }
@@ -190,24 +204,40 @@ impl File {
 
         // Handle removed dependencies
         for name in previous_keys {
-            let version = match previous_dependencies
+            let (version, package_name): (SemverVersion, &str) = match previous_dependencies
                 .get(&name)
                 .expect("Previous dependencies should include this dependency.")
             {
-                CargoDependencyValue::Simple(version) => SemverVersion::new(version).unwrap(),
-                CargoDependencyValue::Detailed(DetailedCargoDependency { version, .. }) => {
-                    SemverVersion::new(version)
-                        .expect("Previous dependencies should include this dependency.")
+                CargoDependencyValue::Simple(version) => {
+                    let version = SemverVersion::new(version).unwrap();
+                    (version, &name)
                 }
-                CargoDependencyValue::Git(GitCargoDependency { git }) => {
+                CargoDependencyValue::Detailed(DetailedCargoDependency { package, version }) => {
+                    let version = SemverVersion::new(version)
+                        .expect("Previous dependencies should include this dependency.");
+                    let name = if let Some(package_value) = package {
+                        package_value
+                    } else {
+                        &name
+                    };
+                    (version, name)
+                }
+                CargoDependencyValue::Git(GitCargoDependency { git, package }) => {
                     log::warn!("Git dependency `{git}` found, but version change detection for git dependencies is not currently supported");
-                    SemverVersion::new("0").expect("`0` should be a valid semver version")
+                    let version =
+                        SemverVersion::new("0").expect("`0` should be a valid semver version");
+                    let name = if let Some(package_value) = package {
+                        package_value
+                    } else {
+                        &name
+                    };
+                    (version, name)
                 }
             };
             if let Some(label_value) = label {
-                let _ = writeln!(result, "🗑️ remove {name} {label_value} {version}");
+                let _ = writeln!(result, "🗑️ remove {package_name} {label_value} {version}");
             } else {
-                let _ = writeln!(result, "🗑️ remove {name} {version}");
+                let _ = writeln!(result, "🗑️ remove {package_name} {version}");
             }
         }
 
@@ -290,6 +320,7 @@ pub struct DetailedCargoDependency {
     // #[allow(dead_code, reason = "Field needed for deserialisation")]
     #[allow(dead_code)]
     version: String,
+    package: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -298,6 +329,7 @@ pub struct GitCargoDependency {
     // #[allow(dead_code, reason = "Field needed for deserialisation")]
     #[allow(dead_code)]
     git: String,
+    package: Option<String>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
