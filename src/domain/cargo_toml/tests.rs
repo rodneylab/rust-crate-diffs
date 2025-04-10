@@ -53,13 +53,17 @@ fn new_successfully_parses_valid_cargo_toml_dependencies() {
     let File { dependencies, .. } = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap();
 
     // assert
-    assert_eq!(dependencies.len(), 9);
+    assert!(dependencies.is_some());
+    let Some(dependencies_value) = dependencies else {
+        panic!("dependencies should be some");
+    };
+    assert_eq!(dependencies_value.len(), 9);
     assert_eq!(
-        dependencies.get("ahash"),
+        dependencies_value.get("ahash"),
         Some(CargoDependencyValue::Simple(String::from("0.8.11"))).as_ref()
     );
     assert_eq!(
-        dependencies.get("serde"),
+        dependencies_value.get("serde"),
         Some(CargoDependencyValue::Detailed(DetailedCargoDependency {
             version: String::from("1.0.215"),
             package: None
@@ -67,14 +71,14 @@ fn new_successfully_parses_valid_cargo_toml_dependencies() {
         .as_ref()
     );
     assert_eq!(
-        dependencies.get("sqlx"),
+        dependencies_value.get("sqlx"),
         Some(CargoDependencyValue::Detailed(DetailedCargoDependency {
             version: String::from("0.8.2"),
             package: None
         }))
         .as_ref()
     );
-    insta::assert_json_snapshot!(dependencies);
+    insta::assert_json_snapshot!(dependencies_value);
 }
 
 #[test]
@@ -112,7 +116,7 @@ fn new_handles_missing_cargo_toml() {
     assert!(chain.next().is_none());
 }
 #[test]
-fn new_handles_missing_dependencies_in_cargo_toml() {
+fn new_accetps_missing_dependencies_in_cargo_toml() {
     // arrange
     let temp_dir = assert_fs::TempDir::new().unwrap();
     let cargo_toml_content = r#"[package]
@@ -133,25 +137,10 @@ trycmd = "0.15.8"
     let temporary_cargo_toml_path = temp_dir.join("Cargo.toml");
 
     // act
-    let outcome = File::new(temporary_cargo_toml_path.to_str().unwrap()).unwrap_err();
+    let outcome = File::new(temporary_cargo_toml_path.to_str().unwrap());
 
     // assert
-    assert_eq!(
-        format!("{outcome}"),
-        format!("Error parsing `{}`", temporary_cargo_toml_path.display())
-    );
-    let mut chain = outcome.chain();
-    assert_eq!(
-        chain.next().map(|val| format!("{val}")),
-        Some(format!(
-            "Error parsing `{}`",
-            temporary_cargo_toml_path.display()
-        ))
-    );
-    assert_eq!(
-        chain.next().map(|val| format!("{val}")),
-        Some(String::from("missing field `dependencies`",))
-    );
+    assert!(outcome.is_ok());
 }
 
 #[test]

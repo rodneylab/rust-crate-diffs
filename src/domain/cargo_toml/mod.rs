@@ -16,9 +16,12 @@ use super::SemverVersion;
 
 #[derive(Debug)]
 pub struct File {
-    dependencies: BTreeMap<String, CargoDependencyValue>,
+    dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     build_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     dev_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
+
+    #[expect(dead_code)]
+    workspace_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
 }
 
 impl File {
@@ -31,6 +34,7 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
+            workspace_dependencies,
         } = current_cargo
             .try_deserialize::<CargoFile>()
             .with_context(|| format!("Error parsing `{path}`"))?;
@@ -42,6 +46,7 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
+            workspace_dependencies,
         })
     }
 
@@ -56,6 +61,7 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
+            workspace_dependencies,
         } = toml::from_str(toml_str).context("Creating `CargoFile` from str")?;
         log::trace!("Cargo: {dependencies:?}");
 
@@ -63,6 +69,7 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
+            workspace_dependencies,
         })
     }
 
@@ -285,9 +292,9 @@ impl File {
     pub fn print_changes_versus_previous_version(&self, previous: &Self) -> anyhow::Result<String> {
         let mut result: String = String::new();
 
-        Self::get_dependency_changes_versus_previous(
-            &self.dependencies,
-            &previous.dependencies,
+        Self::get_optional_dependency_changes_versus_previous(
+            self.dependencies.as_ref(),
+            previous.dependencies.as_ref(),
             None,
             &mut result,
         )?;
@@ -353,7 +360,8 @@ pub enum CargoDependencyValue {
 #[cfg_attr(test, derive(serde::Serialize))]
 #[serde(rename_all = "kebab-case")]
 pub struct CargoFile {
-    pub dependencies: BTreeMap<String, CargoDependencyValue>,
+    pub dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     pub build_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     pub dev_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
+    pub workspace_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
 }
