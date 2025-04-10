@@ -34,4 +34,8 @@ repos:
     rev: 0.18.2
     hooks:
       - id: cargo-deny
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.31.1
+    hooks:
+      - id: typos
         args: ["--all-features", "check"]
