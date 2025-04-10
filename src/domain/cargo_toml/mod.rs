@@ -19,8 +19,6 @@ pub struct File {
     dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     build_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     dev_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
-
-    #[expect(dead_code)]
     workspace_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
 }
 
@@ -34,13 +32,20 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
-            workspace_dependencies,
+            workspace,
         } = current_cargo
             .try_deserialize::<CargoFile>()
             .with_context(|| format!("Error parsing `{path}`"))?;
+
+        let workspace_dependencies = if let Some(workspace_val) = workspace {
+            workspace_val.dependencies
+        } else {
+            None
+        };
         log::trace!("Cargo dependencies: {dependencies:?}");
         log::trace!("Cargo build-dependencies: {build_dependencies:?}");
         log::trace!("Cargo dev-dependencies: {dev_dependencies:?}");
+        log::trace!("Cargo workspace-dependencies: {workspace_dependencies:?}");
 
         Ok(Self {
             dependencies,
@@ -61,9 +66,15 @@ impl File {
             dependencies,
             build_dependencies,
             dev_dependencies,
-            workspace_dependencies,
+            workspace,
         } = toml::from_str(toml_str).context("Creating `CargoFile` from str")?;
         log::trace!("Cargo: {dependencies:?}");
+
+        let workspace_dependencies = if let Some(workspace_val) = workspace {
+            workspace_val.dependencies
+        } else {
+            None
+        };
 
         Ok(Self {
             dependencies,
@@ -313,6 +324,13 @@ impl File {
             &mut result,
         )?;
 
+        Self::get_optional_dependency_changes_versus_previous(
+            self.workspace_dependencies.as_ref(),
+            previous.workspace_dependencies.as_ref(),
+            Some("(🗄️ workspace-dependencies)"),
+            &mut result,
+        )?;
+
         if result.is_empty() {
             return Ok(String::from("🧹 No changes detected.\n"));
         }
@@ -358,10 +376,16 @@ pub enum CargoDependencyValue {
 
 #[derive(Debug, Deserialize)]
 #[cfg_attr(test, derive(serde::Serialize))]
+pub struct CargoWorkspace {
+    pub dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[cfg_attr(test, derive(serde::Serialize))]
 #[serde(rename_all = "kebab-case")]
 pub struct CargoFile {
     pub dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     pub build_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
     pub dev_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
-    pub workspace_dependencies: Option<BTreeMap<String, CargoDependencyValue>>,
+    pub workspace: Option<CargoWorkspace>,
 }

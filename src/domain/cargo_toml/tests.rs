@@ -115,8 +115,9 @@ fn new_handles_missing_cargo_toml() {
     );
     assert!(chain.next().is_none());
 }
+
 #[test]
-fn new_accetps_missing_dependencies_in_cargo_toml() {
+fn new_accepts_missing_dependencies_in_cargo_toml() {
     // arrange
     let temp_dir = assert_fs::TempDir::new().unwrap();
     let cargo_toml_content = r#"[package]
@@ -566,6 +567,68 @@ glob = "0.3.1"
             "🗑\u{fe0f} remove anyhow (🧱 build-dependencies) 1.0.95\n\
                 🗑\u{fe0f} remove fs_extra (🧱 build-dependencies) 1.3.0\n\
                 🗑\u{fe0f} remove glob (🧱 build-dependencies) 0.3.1\n"
+        )
+    );
+}
+
+#[test]
+fn print_dependency_handles_workspace_dependency_changes() {
+    // arrange
+    let updated_cargo_toml_content = r#"[workspace]
+resolver = "2"
+members = [
+  "crates/number-one",
+  "crates/data"
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.74"
+description = "An example Rust app"
+
+[workspace.dependencies]
+ahash = "0.8.11"
+serde = { version = "1", features = ["derive"] }
+"#;
+    let earlier_cargo_toml_content = r#"[workspace]
+resolver = "2"
+members = [
+  "crates/number-one",
+  "crates/data"
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Rust Coder <name@example.com>"]
+edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://github.com/example/example-repo"
+rust-version = "1.74"
+description = "An example Rust app"
+
+[workspace.dependencies]
+ahash = "0.7"
+serde = { version = "0", features = ["derive"] }
+"#;
+
+    let updated_cargo_toml = File::new_from_str(updated_cargo_toml_content).unwrap();
+    let earlier_cargo_toml = File::new_from_str(earlier_cargo_toml_content).unwrap();
+
+    // act
+    let output = updated_cargo_toml
+        .print_changes_versus_previous_version(&earlier_cargo_toml)
+        .unwrap();
+
+    // assert
+    assert_eq!(
+        output,
+        String::from(
+            "❗ bump ahash (🗄\u{fe0f} workspace-dependencies) from 0.7 to 0.8.11\n\
+                ❗ bump serde (🗄\u{fe0f} workspace-dependencies) from 0 to 1\n"
         )
     );
 }
