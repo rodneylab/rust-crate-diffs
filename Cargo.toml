@@ -18,7 +18,7 @@ opt-level = 3
 opt-level = 3
 
 [dependencies]
-anyhow = "1.0.97"
+anyhow = "1.0.98"
 clap = { version = "4.5.35", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 config = "0.15.11"
