@@ -19,17 +19,17 @@ opt-level = 3
 
 [dependencies]
 anyhow = "1.0.98"
-clap = { version = "4.5.37", features = ["derive"] }
+clap = { version = "4.5.38", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 config = "0.15.11"
 env_logger = "0.11.8"
-git2 = "0.20.1"
+git2 = "0.20.2"
 log = "0.4.27"
 semver = "1.0.26"
 serde = { version = "1.0.219", features = ["derive"] }
-toml = "0.8.20"
+toml = "0.8.22"
 
 [dev-dependencies]
-assert_fs = "1.1.2"
-insta = { version = "1.42.2", features = ["glob", "json"] }
+assert_fs = "1.1.3"
+insta = { version = "1.43.1", features = ["glob", "json"] }
 trycmd = "0.15.9"
