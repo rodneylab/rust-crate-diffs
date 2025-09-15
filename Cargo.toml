@@ -21,7 +21,7 @@ opt-level = 3
 anyhow = "1.0.98"
 clap = { version = "4.5.41", features = ["derive"] }
 clap-verbosity-flag = "3.0.3"
-config = "0.15.13"
+config = "0.15.16"
 env_logger = "0.11.8"
 git2 = "0.20.2"
 log = "0.4.27"
