@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use assert_fs::{
-    prelude::{FileWriteStr, PathChild},
     TempDir,
+    prelude::{FileWriteStr, PathChild},
 };
 
 use crate::domain::cargo_toml::{CargoDependencyValue, DetailedCargoDependency};
@@ -733,8 +733,8 @@ getrandom2 = { package = "getrandom", version = "0.2.1", features = ["js"] }
 }
 
 #[test]
-fn get_changes_from_current_dependencies_emits_package_field_for_name_when_present_and_tracks_changed_alias(
-) {
+fn get_changes_from_current_dependencies_emits_package_field_for_name_when_present_and_tracks_changed_alias()
+ {
     // arrange
     let updated_cargo_toml_content = r#"[package]
 name = "some-example-crate"
@@ -778,7 +778,7 @@ getrandom_previous = { package = "getrandom", version = "0.2.1", features = ["js
     assert_eq!(
         output,
         String::from(
-   "✨ add getrandom 0.3.2\n✨ add getrandom 0.2.15\n🗑\u{fe0f} remove getrandom_current 0.3\n🗑\u{fe0f} remove getrandom 0.2.1\n"
+            "✨ add getrandom 0.3.2\n✨ add getrandom 0.2.15\n🗑\u{fe0f} remove getrandom_current 0.3\n🗑\u{fe0f} remove getrandom 0.2.1\n"
         )
     );
 }

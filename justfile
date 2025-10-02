@@ -27,7 +27,8 @@ coverage:
 # generate docs for a crate and copy link to clipboard
 doc crate:
     cargo doc -p {{ crate }}
-    @echo "`pwd`/target/doc/{{ crate }}/index.html" | pbcopy
+    @echo "`pwd`/target/doc/`echo \"{{ crate }}\" | tr - _ \
+        | sed 's/^rust_//' | sed -E 's/@[0-9\.]+$//' `/index.html" | pbcopy
 
 # review (accept/reject/...) insta snapshots
 insta-snapshot-review:
