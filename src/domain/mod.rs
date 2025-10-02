@@ -1,4 +1,3 @@
-pub mod cargo_crate;
 pub mod cargo_toml;
 pub mod repo;
 pub mod semver;

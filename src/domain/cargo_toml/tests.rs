@@ -778,7 +778,7 @@ getrandom_previous = { package = "getrandom", version = "0.2.1", features = ["js
     assert_eq!(
         output,
         String::from(
-   "✨ add getrandom 0.3.2\n✨ add getrandom 0.2.15\n🗑\u{fe0f} remove getrandom_current 0.3\n🗑\u{fe0f} remove getrandom 0.2.1\n"
+            "✨ add getrandom 0.3.2\n✨ add getrandom 0.2.15\n🗑\u{fe0f} remove getrandom_current 0.3\n🗑\u{fe0f} remove getrandom 0.2.1\n"
         )
     );
 }
