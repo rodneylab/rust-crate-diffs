@@ -11,7 +11,7 @@ description = "Check Cargo.toml dependency changes against git repo head"
 
 [dependencies]
 anyhow = "1.0.100"
-clap = { version = "4.5.48", features = ["derive"] }
+clap = { version = "4.5.51", features = ["derive"] }
 clap-verbosity-flag = "3.0.4"
 config = "0.15.18"
 env_logger = "0.11.8"
