@@ -19,7 +19,7 @@ git2 = "0.20.4"
 log = "0.4.29"
 semver = "1.0.27"
 serde = { version = "1.0.228", features = ["derive"] }
-toml = "1.0.3"
+toml = "1.0.6"
 
 [dev-dependencies]
 assert_fs = "1.1.3"
