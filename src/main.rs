@@ -74,7 +74,7 @@ mod tests {
                     input_repo_cargo_toml_path.to_str().unwrap().to_string();
                 let tail_index = input_repo_cargo_toml_path_str.len() - 10;
                 let path_stem = &input_repo_cargo_toml_path_str[..tail_index];
-                let input_local_cargo_toml_path = format!("{path_stem}_local.toml",);
+                let input_local_cargo_toml_path = format!("{path_stem}_local.toml");
                 assert!(fs::exists(&input_local_cargo_toml_path).is_ok());
 
                 let temp_dir = assert_fs::TempDir::new().unwrap();
