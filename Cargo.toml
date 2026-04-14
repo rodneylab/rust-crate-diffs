@@ -5,8 +5,8 @@ authors = ["Rodney Johnson <ask@rodneylab.com>"]
 edition = "2021"
 license = "BSD-3-Clause"
 repository = "https://github.com/rodneylab/rust-crate-diffs"
-# Rust 2024 requires MSRV to 1.85
-rust-version = "1.85"
+# git2 0.20.4 requires MSRV to 1.86
+rust-version = "1.86"
 description = "Check Cargo.toml dependency changes against git repo head"
 
 [dependencies]
