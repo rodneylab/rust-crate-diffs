@@ -48,7 +48,7 @@ impl Repo {
             .context("Get repo default branch tree")?;
         let file_entry = main_tree
             .iter()
-            .find(|val| val.name() == Some("Cargo.toml"))
+            .find(|val| val.name() == Ok("Cargo.toml"))
             .context("No Cargo.toml found in route directory of Git branch")?;
 
         let file_object = file_entry
