@@ -16,7 +16,7 @@ clap-verbosity-flag = "3.0.4"
 config = "0.15.23"
 env_logger = "0.11.10"
 git2 = "0.21.0"
-log = "0.4.29"
+log = "0.4.30"
 semver = "1.0.28"
 serde = { version = "1.0.228", features = ["derive"] }
 toml = "1.1.2"
